@@ -309,7 +309,7 @@ func main() {
 				GMOFree,
 				Organic,
 			},
-			Price: 1.99,
+			Price: 3.46,
 		},
 		{
 			PID:  "E5T6-9UI3-TH15-QR88",
@@ -318,7 +318,7 @@ func main() {
 				Organic,
 				GMOFree,
 			},
-			Price: 1.79,
+			Price: 2.99,
 		},
 		{
 			PID:  "YRT6-72AS-K736-L4AR",
@@ -327,7 +327,7 @@ func main() {
 				LocallySourced,
 				GMOFree,
 			},
-			Price: 3.50,
+			Price: 0.79,
 		},
 		{
 			PID:  "TQ4C-VV6T-75ZX-1RMR",
@@ -336,7 +336,7 @@ func main() {
 				FamilyOwned,
 				Organic,
 			},
-			Price: 1.49,
+			Price: 3.59,
 		},
 	}
 	inventory = append(inventory, initialInventory...)
