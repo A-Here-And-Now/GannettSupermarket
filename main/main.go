@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -54,56 +55,62 @@ func getItem(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-}
-
-// This is provided to other functions to grab objects before operating on the 'inventory'
-// 'field' is the key/property we want to search with, 'value' is the search value
-func _getItemAt(field string, value string) (bool, Item) {
-	for _, item := range inventory {
-		itemValue := ""
-		switch field {
-		case "name":
-			itemValue = item.Name
-			break
-		case "pid":
-			itemValue = item.PID
-			break
-		}
-		//strings.ToUpper to ensure our PIDs and Names are case-insensitive
-		if strings.ToUpper(itemValue) == strings.ToUpper(value) {
-			return true, item
-		}
-	}
-	return false, Item{}
+	// item not found, return a response accordingly
+	log.Println("404 error - deleteItem(): Cannot find item: ", searchValue)
+	w.Write([]byte("Could not find item in inventory: " + searchValue))
+	w.WriteHeader(http.StatusNotFound) // return 404 Not Found
 }
 
 // If an array is not submitted a 400 is returned
 // the 16 digit product id is received in the request to create a new item
-func createItems(w http.ResponseWriter, r *http.Request) {
+func addItem(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Println("Function Called: createItems()")
+
+	var addItemReq Item
+	err := json.NewDecoder(r.Body).Decode(&addItemReq)
+	if err != nil {
+		// the client didn't format the JSON properly - should a single Item-typed object
+		log.Println("error: ", err)
+		w.Write([]byte(`Could not parse the format of items received. 
+			Please provide a JSON object with 'price', 'name' and 'pid'.`))
+		w.WriteHeader(http.StatusBadRequest) // return 400 Bad Request
+		return
+	}
+
+	// truncate the float64 provided to two decimals to ensure prices don't have more than necessary
+	addItemReq.Price, err = strconv.ParseFloat(fmt.Sprintf("%.2f", addItemReq.Price), 64)
+	// now we know its safe to add the items to inventory because they have been validated for format
+	inventory = append(inventory, addItemReq)
+
+	w.WriteHeader(http.StatusOK) //return 200 OK
+	json.NewEncoder(w).Encode(inventory)
+}
+
+// If an array is not submitted a 400 is returned
+// the 16 digit product id is received in the request to create a new item
+func addItems(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Println("Function Called: createItems()")
 
 	var createItemsReq []Item
 	err := json.NewDecoder(r.Body).Decode(&createItemsReq)
 	if err != nil {
+		// the client didn't format the JSON properly - should be array of Item-typed objects
 		log.Println("error: ", err)
+		w.Write([]byte(`Could not parse the format of items received. 
+			Please provide a JSON object with 'price', 'name' and 'pid'.`))
 		w.WriteHeader(http.StatusBadRequest) // return 400 Bad Request
 		return
 	}
 
-	for _, newItem := range createItemsReq {
-		// if the item already exists we simply act as though it is
-		// having its qualities, price, and quantity updated
-		if success, item := _getItemAt("name", newItem.Name); success {
-			_updateItem(Item{
-				PID:   item.PID,
-				Name:  item.Name,
-				Price: newItem.Price,
-			})
-		} else {
-			inventory = append(inventory, newItem)
-		}
+	for _, item := range createItemsReq {
+		// truncate the float64 provided to two decimals to ensure prices don't have more than necessary
+		item.Price, err = strconv.ParseFloat(fmt.Sprintf("%.2f", item.Price), 64)
 	}
+	// now we know its safe to add the items to inventory because they have been validated for format
+	inventory = append(inventory, createItemsReq...)
+
 	w.WriteHeader(http.StatusOK) //return 200 OK
 	json.NewEncoder(w).Encode(inventory)
 }
@@ -121,7 +128,9 @@ func deleteItem(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK) //return 200 OK
 		json.NewEncoder(w).Encode(inventory)
 	} else {
+		// item not found - return a response accordingly
 		log.Println("404 error - deleteItem(): Cannot find PID: ", pid)
+		w.Write([]byte("Could not find item in inventory: " + pid))
 		w.WriteHeader(http.StatusNotFound) // return 404 Not Found
 		return
 	}
@@ -140,26 +149,13 @@ func _deleteItemAt(pid string) bool {
 	return false
 }
 
-// return true/false so we can report a 404 Not Found from within the calling function
-func _updateItem(newItem Item) bool {
-	for index, item := range inventory {
-		//strings.ToUpper to ensure our PIDs are case-insensitive
-		if strings.ToUpper(item.PID) == strings.ToUpper(newItem.PID) {
-			// Re-assign item in slice
-			inventory[index] = newItem
-			return true
-		}
-	}
-	return false
-}
-
 func handleRequests() {
 
 	router := mux.NewRouter().StrictSlash(true)
 
 	router.HandleFunc("/inventory", getInventory).Methods("GET")
-	router.HandleFunc("/inventory/addItem", createItems).Methods("POST")
-	router.HandleFunc("/inventory/addItems", createItems).Methods("POST")
+	router.HandleFunc("/inventory/addItems", addItems).Methods("POST")
+	router.HandleFunc("/inventory/addItem", addItem).Methods("POST")
 
 	//searchValue could be a name, or it could be a product ID
 	router.HandleFunc("/inventory/{searchValue}", getItem).Methods("GET")
