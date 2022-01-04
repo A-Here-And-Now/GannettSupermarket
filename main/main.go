@@ -23,6 +23,30 @@ var inventory []Item
 
 // some users just want to see the inventory directly
 func getInventory(w http.ResponseWriter, r *http.Request) {
+	if len(inventory) == 0 {
+		inventory = []Item{
+			{
+				PID:   "A12T-4GH7-QPL9-3N4M",
+				Name:  "Lettuce",
+				Price: 3.46,
+			},
+			{
+				PID:   "E5T6-9UI3-TH15-QR88",
+				Name:  "Peach",
+				Price: 2.99,
+			},
+			{
+				PID:   "YRT6-72AS-K736-L4AR",
+				Name:  "Green Pepper",
+				Price: 0.79,
+			},
+			{
+				PID:   "TQ4C-VV6T-75ZX-1RMR",
+				Name:  "Gala Apple",
+				Price: 3.59,
+			},
+		}
+	}
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Println("Function Called: getInventory()")
 
@@ -35,7 +59,7 @@ func getInventory(w http.ResponseWriter, r *http.Request) {
 // can look up by product ID
 func getItem(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Println("Function Called: getItemByID()")
+	fmt.Println("Function Called: getItem()")
 
 	params := mux.Vars(r)
 	searchValue := params["searchValue"]
@@ -56,8 +80,7 @@ func getItem(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// item not found, return a response accordingly
-	log.Println("404 error - deleteItem(): Cannot find item: ", searchValue)
-	w.Write([]byte("Could not find item in inventory: " + searchValue))
+	log.Println("404 error - getItem(): Cannot find item: ", searchValue)
 	w.WriteHeader(http.StatusNotFound) // return 404 Not Found
 }
 
@@ -65,15 +88,14 @@ func getItem(w http.ResponseWriter, r *http.Request) {
 // the 16 digit product id is received in the request to create a new item
 func addItem(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Println("Function Called: createItems()")
+	fmt.Println("Function Called: addItem()")
 
 	var addItemReq Item
 	err := json.NewDecoder(r.Body).Decode(&addItemReq)
-	if err != nil {
-		// the client didn't format the JSON properly - should a single Item-typed object
-		log.Println("error: ", err)
-		w.Write([]byte(`Could not parse the format of items received. 
-			Please provide a JSON object with 'price', 'name' and 'pid'.`))
+	if err != nil || _checkAddItem(addItemReq) {
+		// the client didn't format the JSON properly - should be a single object of Item type
+		log.Println(`Could not parse the format of item received.
+			Please provide a JSON object with 'price', 'name' and 'pid': `, err)
 		w.WriteHeader(http.StatusBadRequest) // return 400 Bad Request
 		return
 	}
@@ -87,32 +109,62 @@ func addItem(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(inventory)
 }
 
+func _checkAddItem(item Item) bool {
+	if item.Price == 0.00 || item.Name == "" || item.PID == "" {
+		return true
+	} else {
+		regex := regexp.MustCompile("^[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}$")
+		isValidPID := regex.MatchString(item.PID)
+		if !isValidPID {
+			return true
+		} else {
+			for _, oldItem := range inventory {
+				//strings.ToUpper to ensure our PIDs and Names are case-insensitive
+				if strings.ToUpper(oldItem.PID) == strings.ToUpper(item.PID) {
+					log.Printf("adding PID that already exists -- %v", item.PID)
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 // If an array is not submitted a 400 is returned
 // the 16 digit product id is received in the request to create a new item
 func addItems(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Println("Function Called: createItems()")
+	fmt.Println("Function Called: addItems()")
 
 	var createItemsReq []Item
 	err := json.NewDecoder(r.Body).Decode(&createItemsReq)
-	if err != nil {
-		// the client didn't format the JSON properly - should be array of Item-typed objects
-		log.Println("error: ", err)
-		w.Write([]byte(`Could not parse the format of items received. 
-			Please provide a JSON object with 'price', 'name' and 'pid'.`))
+	if err != nil || _checkAddItems(createItemsReq) {
+		// the client didn't format the JSON properly - should be a single object of Item type
+		log.Println(`Could not parse the format of items received.
+			Please provide a JSON array of objects with 'price', 'name' and 'pid': `, err)
 		w.WriteHeader(http.StatusBadRequest) // return 400 Bad Request
 		return
 	}
 
-	for _, item := range createItemsReq {
+	for i, item := range createItemsReq {
 		// truncate the float64 provided to two decimals to ensure prices don't have more than necessary
-		item.Price, err = strconv.ParseFloat(fmt.Sprintf("%.2f", item.Price), 64)
+		createItemsReq[i].Price, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", item.Price), 64)
 	}
+
 	// now we know its safe to add the items to inventory because they have been validated for format
 	inventory = append(inventory, createItemsReq...)
 
 	w.WriteHeader(http.StatusOK) //return 200 OK
 	json.NewEncoder(w).Encode(inventory)
+}
+
+func _checkAddItems(items []Item) bool {
+	for _, item := range items {
+		if _checkAddItem(item) {
+			return true
+		}
+	}
+	return false
 }
 
 // deleting items occurs only one at a time
