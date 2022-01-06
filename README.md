@@ -4,7 +4,7 @@
 Returns the current state of the grocery's inventory.
 
 ##### Body
-No response body required
+No request body required
 
 ##### Error Codes
 No errors codes at this endpoint
@@ -57,7 +57,7 @@ Returns the first item in the inventory that matches the searchValue, if any.
 The searchValue is retrieved from the url and can be either an item name or PID.
 
 ##### Body
-No response body required
+No request body required
 
 ##### Error Codes
 404 - item not found with that PID/Name
@@ -69,10 +69,10 @@ Only a PID is valid at this endpoint.
 It return the inventory after deleting the item.
 
 ##### Body
-No response body required
+No request body required
 
 ##### Error Codes
-404 - item not found with that PID/Name
+404 - item not found with that PID
 
 
 
@@ -99,7 +99,7 @@ Here is a running list of potential improvements to be made to the project
 - [ ] Add a test step in the api_test.go that validates that a 404 is received at the DELETE endpoint if the given PID is not found in the inventory
 - [ ] Change "Item" object to include a Quantity value that increments when an existing item name is added (requires that PIDs be stored in an array of strings that houses each individual Apple's own PID)
 - [ ] Add a PUT endpoint for suppliers to add to the Quantity of an item to represent a supplier dropping off a shipment
-- [ ] Allow for employees to add new item names/types to the inventory
+- [ ] Add a PUT endpoint to allow for employees to add new item names/types to the inventory
 - [ ] Add the Qualities array to Item to house a list of qualities that can be attached to each item (e.g. gluten-free or grass-fed, etc.)
 - [ ] Add a PUT endpoint for employees that allows them to update an item in the inventory with new Quality entries to the Qualities array 
 - [ ] Add POST endpoints where transactions with customers and suppliers can be posted (This requires an array of transactions be stored in a new storage variable, much like 'inventory')
