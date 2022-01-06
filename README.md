@@ -86,5 +86,21 @@ To run the API, navigate to the main directory of this project and run the follo
 To run the api_test.go file, from the main directory run:
 `go test`
 
+### Code GOTCHAS and recommendations
+* There are a lot of helpful comments in the code. I recommend you read through all of a function's comments if you don't understand how that function works.
+* Remember to write headers before you call w.Write or your header codes won't be included in the response because w.Write returns the response immediately after it runs.
+* We allow users to perform the erroneous operation of submitting a price with more than 2 digits. We will simply round to the nearest 2nd digit to conform to proper price format.
+* We use the gorilla/mux library for all our router needs (as well as setting URL variables in our api_test.go file) refer to their documentation here: https://pkg.go.dev/github.com/gorilla/mux
+
 ### Potential Improvements
 Here is a running list of potential improvements to be made to the project
+
+- [ ] Add a test step in the api_test.go that validates that a 404 is received at the DELETE endpoint if the given PID is not found in the inventory
+- [ ] Change "Item" object to include a Quantity value that increments when an existing item name is added (requires that PIDs be stored in an array of strings that houses each individual Apple's own PID)
+- [ ] Add a PUT endpoint for suppliers to add to the Quantity of an item to represent a supplier dropping off a shipment
+- [ ] Allow for employees to add new item names/types to the inventory
+- [ ] Add the Qualities array to Item to house a list of qualities that can be attached to each item (e.g. gluten-free or grass-fed, etc.)
+- [ ] Add a PUT endpoint for employees that allows them to update an item in the inventory with new Quality entries to the Qualities array 
+- [ ] Add POST endpoints where transactions with customers and suppliers can be posted (This requires an array of transactions be stored in a new storage variable, much like 'inventory')
+- [ ] Add a GET endpoint that processes the NET profit from the accumulated transactions
+- [ ] Add timestamps to each transaction so we can try to generate daily, weekly, monthly sales/profit reports

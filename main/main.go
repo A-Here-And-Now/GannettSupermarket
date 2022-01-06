@@ -23,6 +23,9 @@ var inventory []Item
 
 // some users just want to see the inventory directly
 func getInventory(w http.ResponseWriter, r *http.Request) {
+	// this if statement is here to be exercised in the event we are running this function
+	// from the api_test.go file (happens at the very beginning) because we haven't
+	// initialized these values, as main() isn't exercised in that case
 	if len(inventory) == 0 {
 		inventory = []Item{
 			{
@@ -82,6 +85,7 @@ func getItem(w http.ResponseWriter, r *http.Request) {
 	// item not found, return a response accordingly
 	log.Println("404 error - getItem(): Cannot find item: ", searchValue)
 	w.WriteHeader(http.StatusNotFound) // return 404 Not Found
+	w.Write([]byte("Could not find item in inventory: " + searchValue))
 }
 
 // If an array is not submitted a 400 is returned
@@ -94,9 +98,9 @@ func addItem(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&addItemReq)
 	if err != nil || _checkAddItem(addItemReq) {
 		// the client didn't format the JSON properly - should be a single object of Item type
-		log.Println(`Could not parse the format of item received.
-			Please provide a JSON object with 'price', 'name' and 'pid': `, err)
 		w.WriteHeader(http.StatusBadRequest) // return 400 Bad Request
+		w.Write([]byte(`Could not parse the format of items received. 
+			Please provide a JSON object with 'price', 'name' and 'pid'.`))
 		return
 	}
 
@@ -140,9 +144,9 @@ func addItems(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&createItemsReq)
 	if err != nil || _checkAddItems(createItemsReq) {
 		// the client didn't format the JSON properly - should be a single object of Item type
-		log.Println(`Could not parse the format of items received.
-			Please provide a JSON array of objects with 'price', 'name' and 'pid': `, err)
 		w.WriteHeader(http.StatusBadRequest) // return 400 Bad Request
+		w.Write([]byte(`Could not parse the format of items received. 
+			Please provide a JSON object with 'price', 'name' and 'pid'.`))
 		return
 	}
 
@@ -182,8 +186,8 @@ func deleteItem(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// item not found - return a response accordingly
 		log.Println("404 error - deleteItem(): Cannot find PID: ", pid)
-		w.Write([]byte("Could not find item in inventory: " + pid))
 		w.WriteHeader(http.StatusNotFound) // return 404 Not Found
+		w.Write([]byte("Could not find item in inventory: " + pid))
 		return
 	}
 }
