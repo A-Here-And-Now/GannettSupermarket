@@ -16,19 +16,19 @@ Adds multiple items to the inventory. It returns the inventory after adding the 
 ##### Body
 a JSON array of valid grocery "Item" objects
 
-example input: 
-[
-{
-    "PID":"A1B2-C3D4-E5F6-G7H8",
-    "Name": "Pear",
-    "Price": 1.33,
-},
-{
-    "PID":"Z1X2-C3V4-B5N6-M7K8",
-    "Name": "Orange",
-    "Price": 0.89,
-}
-]
+example input:<br>
+[<br>
+{<br>
+    "PID":"A1B2-C3D4-E5F6-G7H8",<br>
+    "Name": "Pear",<br>
+    "Price": 1.33,<br>
+},<br>
+{<br>
+    "PID":"Z1X2-C3V4-B5N6-M7K8",<br>
+    "Name": "Orange",<br>
+    "Price": 0.89,<br>
+}<br>
+]<br>
 
 ##### Error Codes
 400 - bad json format, missing item properties, or bad PID or PID already exists
@@ -41,12 +41,12 @@ to be exercised in the case that we are adding one item.
 ##### Body
 The body should be a JSON formatted "Item" object
 
-example input: 
-{
-    "PID":"A1B2-C3D4-E5F6-G7H8",
-    "Name": "Pear",
-    "Price": 1.33,
-}
+example input:<br>
+{<br>
+    "PID":"A1B2-C3D4-E5F6-G7H8",<br>
+    "Name": "Pear",<br>
+    "Price": 1.33,<br>
+}<br>
 
 ##### Error Codes
 400 - bad json format, missing item properties, or bad PID or PID already exists
