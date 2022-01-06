@@ -37,7 +37,7 @@ example input:<br>
 ### POST /inventory/addItem
 Performs exactly the same as the addItems endpoint but is only intended
 to be exercised in the case that we are adding one item.
-
+It returns the inventory after adding the item.
 ##### Body
 The body should be a JSON formatted "Item" object
 
@@ -66,6 +66,7 @@ No response body required
 ### DELETE /inventory/{pid}
 Deletes the item that matches the given pid. 
 Only a PID is valid at this endpoint.
+It return the inventory after deleting the item.
 
 ##### Body
 No response body required
