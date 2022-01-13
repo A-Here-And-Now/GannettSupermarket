@@ -84,8 +84,10 @@ After introducing yourself to all of the endpoints using the above documentation
 To run the API, navigate to the main directory of this project and run the following command: 
 `go run main.go`
 
-To run the api_test.go file, from the main directory run:
-`go test`
+To run the api_test.go file, from the main directory run (-v reveals the output from t.Log() calls):
+`go test -v`
+
+
 
 ### Code GOTCHAS and recommendations
 * There are a lot of helpful comments in the code. I recommend you read through all of a function's comments if you don't understand how that function works.
@@ -96,7 +98,7 @@ To run the api_test.go file, from the main directory run:
 ### Potential Improvements
 Here is a running list of potential improvements to be made to the project
 
-- [ ] Add a test step in the api_test.go that validates that a 404 is received at the DELETE endpoint if the given PID is not found in the inventory
+- [x] Add a test step in the api_test.go that validates that a 404 is received at the DELETE endpoint if the given PID is not found in the inventory
 - [ ] Change "Item" object to include a Quantity value that increments when an existing item name is added (requires that PIDs be stored in an array of strings that houses each individual Apple's own PID)
 - [ ] Add a PUT endpoint for suppliers to add to the Quantity of an item to represent a supplier dropping off a shipment
 - [ ] Add a PUT endpoint to allow for employees to add new item names/types to the inventory

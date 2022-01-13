@@ -290,14 +290,21 @@ func TestAPI(t *testing.T) {
 		},
 	}
 
+
 	// 1. getInventory ===================================================================================================
+	t.Log("1. getInventory")
+
 	// check that the getInventory endpoint is working correctly after
 	// we have compared the actual with expected, we've already logged
 	// discrepencies so we can set expected to actual and continue
 	actInventory := getInventoryReq(t)
 	expInventory = compareActualWithExpected(actInventory, expInventory, t, "1")
 
+
+
 	// 2. delete Lettuce =================================================================================================
+	t.Log("2. delete Lettuce")
+
 	// we will frequently throw in various upper/lower cases to test case insensitivity.
 	// steps 2-5 will alter the expInventory to match what we expected actInventory
 	// to look like when the next response comes back, since we deleted lettuce and
@@ -306,7 +313,11 @@ func TestAPI(t *testing.T) {
 	actInventory = deleteItemReq("a12T-4Gh7-QPl9-3n4M", t) // also tests case insensitivity
 	expInventory = compareActualWithExpected(actInventory, expInventory, t, "2")
 
+
+
 	// 3. add Tomato =====================================================================================================
+	t.Log("3. add Tomato")
+
 	// we can test the 2 decimal requirement by sending in 3 decimals and expecting to only get 2 back
 	tomato_with_3_decimals := Item{
 		PID:   "M4N5-F0C3-F4gk-si00",
@@ -318,12 +329,16 @@ func TestAPI(t *testing.T) {
 		Name:  "Tomato",
 		Price: 3.35,
 	}
-
+	
 	expInventory = append(expInventory, tomato_expected)
 	actInventory = addItemReq(tomato_with_3_decimals, t)
 	expInventory = compareActualWithExpected(actInventory, expInventory, t, "3")
 
+
+
 	// 4. add Pickle, Broccoli, Chicken Breast ============================================================================
+	t.Log("4. add Pickle, Broccoli, Chicken Breast")
+
 	// we can just initialize the expected array (2_decimal) and the submitted (3_decimal) array side by side
 	items_with_3_decimals := []Item{
 		{
@@ -363,7 +378,11 @@ func TestAPI(t *testing.T) {
 	actInventory = addItemsReq(items_with_3_decimals, t)
 	expInventory = compareActualWithExpected(actInventory, expInventory, t, "4")
 
+
+
 	// 5. delete Broccoli, Gala Apple, Pepper ================================================================================
+	t.Log("5. delete Broccoli, Gala Apple, Pepper")
+
 	// at this point the expected inventory is ['peach', 'pepper', 'apple', 'tomato', 'pickle', 'broccoli', 'chicken']
 	PIDs := []string{"0g44-gm33-4jf9-FGM4", "YRT6-72AS-K736-L4AR", "TQ4C-VV6T-75ZX-1RMR"}
 	expectedIndexes := []int{5, 1, 1} // expected index of broccoli is 5, then pepper 1, and apple 1 since we remove pepper
@@ -373,7 +392,10 @@ func TestAPI(t *testing.T) {
 		expInventory = compareActualWithExpected(actInventory, expInventory, t, "5"+strconv.Itoa(i))
 	}
 
+
+
 	// 6. Using addItem... add BAD Potato due to -- (No Name), then (No Code), ===============================================
+	t.Log("6. Using addItem... add BAD Potato due to -- (No Name), then (No Code)")
 	//     then (No Price), then (Bad PID format),
 	//     then (Not Unique PID)
 
@@ -384,12 +406,15 @@ func TestAPI(t *testing.T) {
 		Name:  "potato",
 		Price: 0.49,
 	}
-
 	// we don't need to compare actual and expected cus we just expect to get 400's back
 	// on all 5 of the different requests that addBadItemAllCasesReq will send out
 	addBadItemAllCasesReq(good_potato, t)
 
+
+
 	// 7. good get Item by name ===============================================================================================
+	t.Log("7. good get Item by name")
+
 	tomato_actual := getItemReq("ToMaTo", t)
 	tomato_expected = expInventory[1]
 	// just initialize arrays using the singular tomato item we get back from getItemReq
@@ -397,17 +422,34 @@ func TestAPI(t *testing.T) {
 	compareActualWithExpected([]Item{tomato_actual}, []Item{tomato_expected}, t, "6")
 
 	// 8. good get Item by PID ================================================================================================
+	t.Log("8. good get Item by PID")
+
 	pickle_actual := getItemReq("F4j6-D4m2-j0G5-G3e5", t)
 	pickle_expected := items_expected[0]
 	// repeat use of compareActualWithExpected as was done above
 	compareActualWithExpected([]Item{pickle_actual}, []Item{pickle_expected}, t, "7")
 
+
+
 	// 9. bad get Item by name, 404 ===========================================================================================
+	t.Log("9. bad get Item by name, 404")
 	getItemNotFoundReq("tomatoe", t) // wrong spelling of tomato supplied, expect a 404
 
+
+
 	// 10. bad get Item by PID, 404 ===========================================================================================
+	t.Log("10. bad get Item by name, 404")
 	getItemNotFoundReq(pickle_expected.PID+"-", t) // malformed pickle PID, expect a 404
 
+
+
 	// 11. bad get Item that was deleted already, 404 =========================================================================
+	t.Log("11. bad get Item that was deleted already, 404")
 	getItemNotFoundReq(items_expected[1].PID, t) // broccoli doesn't exist anymore, expect a 404
+
+
+
+	// 12. bad delete Item using PID that does not exist =========================================================================
+	t.Log("12. bad delete Item using PID that does not exist")
+	deleteItemNotFoundReq("Th1s-P1Dd-N0t3-X1ST", t) // valid PID format but it doesn't exist
 }
