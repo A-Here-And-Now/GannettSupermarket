@@ -28,7 +28,7 @@ type BadItemNoPrice struct {
 	Name string `json:"name"`
 }
 
-// this will check the response status code of a request and log unexpected values
+// checkStatus will check the response status code of a request and log unexpected values
 // in: actStatus -- the actual received status code
 //     expStatus -- the expected status code
 //     t -- the testing.T object
@@ -40,7 +40,7 @@ func checkStatus(actStatus int, expStatus int, t *testing.T, caller string) {
 	}
 }
 
-// this will check an error object passed in and go fatal if the error isn't null
+// checkError will check an error object passed in and go fatal if the error isn't null
 // in: err -- the error object, whether null or not
 //     t -- the testing.T object
 // out: void
@@ -50,7 +50,7 @@ func checkError(err error, t *testing.T) {
 	}
 }
 
-// checks a response for a json formatting error, occurs if the API is returning incorrect objects
+// checkResponseError checks a response for a json formatting error, occurs if the API is returning incorrect objects
 // in: err -- the error, whether null or not
 //     respRecorder -- the response recorder object (this object holds the response body)
 //     expType -- whatever the calling context inputs, the type name given to the object it expects
@@ -62,7 +62,7 @@ func checkResponseError(err error, respRecorder *httptest.ResponseRecorder, expT
 	}
 }
 
-// checks a response for a json formatting error, occurs if the API is returning incorrect objects
+// recordResponse checks a response for a json formatting error, occurs if the API is returning incorrect objects
 // in: err -- the error, whether null or not
 //     respRecorder -- the response recorder object (this object holds the response body)
 //     expType -- whatever the calling context inputs, the type name given to the object it expects
@@ -83,7 +83,7 @@ func setMuxVars(req *http.Request, key string, value string) *http.Request {
 	return mux.SetURLVars(req, vars)
 }
 
-// used to create and send a request for GET /inventory
+// getInventoryReq used to create and send a request for GET /inventory
 // processes the response to check for errors and returns the current inventory in the API
 func getInventoryReq(t *testing.T) []Item {
 	req, err := http.NewRequest("GET", "/inventory", nil)
@@ -99,7 +99,7 @@ func getInventoryReq(t *testing.T) []Item {
 	return Items
 }
 
-// used to create and send a request for GET /inventory/{searchValue}
+// getItemReq is used to create and send a request for GET /inventory/{searchValue}
 // checks for errors and returns the requested item from the API
 func getItemReq(searchValue string, t *testing.T) Item {
 
@@ -118,8 +118,8 @@ func getItemReq(searchValue string, t *testing.T) Item {
 	return Item
 }
 
-// used to create and send a request for GET /inventory/{searchValue} with a bad searchValue
-// checks for the expected 404 error
+// getItemNotFoundReq is used to create and send a request for GET /inventory/{searchValue}
+// with a bad searchValue checks for the expected 404 error
 func getItemNotFoundReq(searchValue string, t *testing.T) {
 	req, err := http.NewRequest("GET", "/inventory/"+searchValue, nil)
 	checkError(err, t)
@@ -130,7 +130,7 @@ func getItemNotFoundReq(searchValue string, t *testing.T) {
 	checkStatus(respRecorder.Code, http.StatusNotFound, t, "getItemNotFoundReq")
 }
 
-// used to create and send a request for DELETE /inventory/{pid}
+// deleteItemReq is used to create and send a request for DELETE /inventory/{pid}
 // checks for errors and returns the current inventory in the API
 func deleteItemReq(pid string, t *testing.T) []Item {
 
@@ -149,8 +149,8 @@ func deleteItemReq(pid string, t *testing.T) []Item {
 	return items
 }
 
-// used to create and send a request for DELETE /inventory/{pid} with a bad pid
-// checks for the expected 404 error
+// deleteItemNotFoundReq is used to create and send a request for
+// DELETE /inventory/{pid} with a bad pid checks for the expected 404 error
 func deleteItemNotFoundReq(badPID string, t *testing.T) {
 	req, err := http.NewRequest("GET", "/inventory/"+badPID, nil)
 	checkError(err, t)
@@ -161,6 +161,8 @@ func deleteItemNotFoundReq(badPID string, t *testing.T) {
 	checkStatus(respRecorder.Code, http.StatusNotFound, t, "deleteItemNotFoundReq")
 }
 
+// addItemReq is used to create and send a request for POST /inventory/addItem
+// checks for errors and returns the current inventory in the API
 func addItemReq(item Item, t *testing.T) []Item {
 	// we must marshall the provided golang object into a json object
 	body, err := json.Marshal(item)
@@ -184,6 +186,8 @@ func addItemReq(item Item, t *testing.T) []Item {
 	return Items
 }
 
+// addItemReqs is functionally identical to the above function but goes to POST /inventory/addItems
+// so multiple items can be added at once
 func addItemsReq(items []Item, t *testing.T) []Item {
 
 	body, err := json.Marshal(items)
@@ -202,6 +206,8 @@ func addItemsReq(items []Item, t *testing.T) []Item {
 	return Items
 }
 
+// addBadItemAllCasesReq will take a given item and walk through all the different desired
+// cases of bad item object formats that will be expected to return a 400 Bad Request
 func addBadItemAllCasesReq(item Item, t *testing.T) {
 	badCases := []string{"No Name", "No Code", "No Price", "Bad PID format", "Not Unique PID"}
 
@@ -217,6 +223,7 @@ func addBadItemAllCasesReq(item Item, t *testing.T) {
 	}
 }
 
+// _buildBadItem is called by addBadItemAllCasesReq to retrieve the desired item format for each case
 func _buildBadItem(badCase string, item Item) interface{} {
 
 	switch badCase {
@@ -290,6 +297,7 @@ func TestAPI(t *testing.T) {
 		},
 	}
 
+	
 
 	// 1. getInventory ===================================================================================================
 	t.Log("1. getInventory")
@@ -329,7 +337,7 @@ func TestAPI(t *testing.T) {
 		Name:  "Tomato",
 		Price: 3.35,
 	}
-	
+
 	expInventory = append(expInventory, tomato_expected)
 	actInventory = addItemReq(tomato_with_3_decimals, t)
 	expInventory = compareActualWithExpected(actInventory, expInventory, t, "3")
@@ -420,6 +428,8 @@ func TestAPI(t *testing.T) {
 	// just initialize arrays using the singular tomato item we get back from getItemReq
 	// so we can reuse compareActualWithExpected's logic w/o writing more unnecessarily
 	compareActualWithExpected([]Item{tomato_actual}, []Item{tomato_expected}, t, "6")
+
+
 
 	// 8. good get Item by PID ================================================================================================
 	t.Log("8. good get Item by PID")
